@@ -1,0 +1,11 @@
+{
+  "name": "personal-plugins",
+  "owner": { "name": "Kyle" },
+  "plugins": [
+    {
+      "name": "audit-core",
+      "source": "./plugins/audit-core",
+      "description": "Independent audit system and PII scrubbing, usable across all projects."
+    }
+  ]
+}
