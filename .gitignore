@@ -1,0 +1,15 @@
+# This repo holds rules and agent definitions only. Never data.
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.docx
+*.pdf
+*.json.key
+answer_key*
+answer-key*
+data/
+synthetic_data/
+findings/
+.env
+.DS_Store

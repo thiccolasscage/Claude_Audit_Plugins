@@ -1,0 +1,17 @@
+{
+  "description": "Ask before writing to connected services or sending personal identifiers out of the session.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.*|WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

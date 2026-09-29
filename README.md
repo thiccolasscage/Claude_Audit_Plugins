@@ -1,0 +1,28 @@
+# personal-plugins
+
+Private Claude plugin marketplace. Contains rules and agent definitions only. Never commit data, answer keys, or anything with real names or contact details; .gitignore blocks common data files as a backstop.
+
+## audit-core
+
+| Component | What it does | Works in |
+| --- | --- | --- |
+| independent-audit skill | Staged review: scope, review, skeptic pass, evidence based report, user decides | Chat, Cowork, Claude Code |
+| pii-scrub skill | Scan, masked report, confirm plan, scrub to new file, verify | Chat, Cowork, Claude Code |
+| skeptic agent | Tries to refute every finding against the source | Cowork, Claude Code |
+| privacy-auditor agent | Identifiers, over collection, small group risk | Cowork, Claude Code |
+| guard hook | Asks before connected-service writes or sending personal identifiers | Cowork, Claude Code (needs python3) |
+
+## Install
+
+1. Push this folder to a private GitHub repo.
+2. claude.ai: Customize > Plugins > Add > Add marketplace > Add from a repository > enter owner/repo.
+3. Install audit-core from that marketplace.
+4. Claude Code picks it up at next session start when signed in with the same account (v2.1.273 or later).
+
+## Updating
+
+Edit, bump the version in plugins/audit-core/.claude-plugin/plugin.json, push, then click Update on the marketplace in Customize > Plugins. Claude.ai does not pull changes on its own.
+
+## Testing auditors
+
+Keep seeded-error test sets and their answer keys outside this repo. Score findings with a script the reviewers cannot read.
