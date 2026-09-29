@@ -10,7 +10,9 @@ Private Claude plugin marketplace. Contains rules and agent definitions only. Ne
 | pii-scrub skill | Scan, masked report, confirm plan, scrub to new file, verify | Chat, Cowork, Claude Code |
 | skeptic agent | Tries to refute every finding against the source | Cowork, Claude Code |
 | privacy-auditor agent | Identifiers, over collection, small group risk | Cowork, Claude Code |
-| guard hook | Asks before connected-service writes or sending personal identifiers | Cowork, Claude Code (needs python3) |
+| guard hook | Asks before connected-service writes or sending personal identifiers | Cowork, Claude Code (needs Python 3 as `python3`, `python` or `py`; asks if none works) |
+
+The guard is strict: it allows a connected-service tool without asking only when the name contains a read verb (`get`, `list`, `search`, `read`, ...) and no write verb anywhere (`get_and_delete` asks). Unknown or write-style tools ask, and so does any call it cannot read. To stop one harmless tool prompting, add its exact action name to `SAFE_ACTIONS` in `plugins/audit-core/hooks/guard.py`. Emails, US phone numbers and SSN patterns in any outbound call also ask (obfuscated forms like "bob at corp dot org" or unformatted nine-digit numbers are not caught).
 
 ## Install
 

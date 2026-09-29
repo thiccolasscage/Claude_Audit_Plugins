@@ -2,8 +2,10 @@
 """Read-only PII scanner. Reports masked findings; never prints full values.
 
 Usage: python pii_scan.py <file> [<file> ...]
-Supports .txt, .md, .csv, .tsv, .xlsx, .docx. Any other format is reported as
-NOT SCANNED (never as clean) and the script exits with code 2.
+Supports .xlsx, .docx and text files (.txt .md .csv .tsv .json .log .html .htm .xml .yaml .yml .rtf).
+Any other format, a missing file, a text file holding NUL bytes (binary, or UTF-16 without a BOM),
+or a file it cannot read is reported as NOT SCANNED (never as clean) and the script exits with code 2.
+An empty text file scans as "No structured identifiers matched".
 Catches structured identifiers only. Names in free text need human review.
 """
 import codecs
@@ -52,6 +54,21 @@ def open_text(path: Path):
         head = f.read(4)
     enc = next((e for bom, e in ENCODINGS_BY_BOM if head.startswith(bom)), "utf-8")
     return open(path, newline="", encoding=enc, errors="replace")
+
+
+def looks_binary(path: Path) -> bool:
+    """True for a text-extension file that holds NUL bytes without a Unicode BOM (binary, or UTF-16 with no BOM)."""
+    with open(path, "rb") as f:
+        head = f.read(4)
+        if head.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+            return True  # UTF-32 is not decoded by this script
+        if any(head.startswith(bom) for bom, _ in ENCODINGS_BY_BOM):
+            return False
+        f.seek(0)
+        while chunk := f.read(1 << 20):
+            if b"\x00" in chunk:
+                return True
+    return False
 
 
 def mask(value: str) -> str:
@@ -152,8 +169,10 @@ def scan(path: Path):
     for loc, text, is_header in cells(path):
         hits = find(text)
         if is_header and text and HEADER_HINTS.search(text):
-            # A "header" that itself holds an identifier is really data (headerless file): mask it.
-            headers.append((loc, mask(text) if hits else text.strip()))
+            # Print only the matched label words, never the cell text: a "header" can really be data
+            # (headerless file), and its text could be a name.
+            words = sorted({m.group(0).lower() for m in HEADER_HINTS.finditer(text)})
+            headers.append((loc, "[" + ", ".join(words) + "]"))
         for label, value in hits:
             counts[label] += 1
             if len(examples[label]) < 3:
@@ -164,7 +183,7 @@ def scan(path: Path):
             examples["AUTHOR_PROPERTY"].append((loc, mask(value)))
     print(f"\n=== {path.name} ===")
     if headers:
-        print("Identifier-like column headers:")
+        print("Identifier-like column headers (label words only, text hidden):")
         for loc, h in headers:
             print(f"  {loc}: {h}")
     if not counts:
@@ -190,6 +209,10 @@ if __name__ == "__main__":
         elif p.suffix.lower() not in SUPPORTED:
             print(f"\nNOT SCANNED: {p.name} (unsupported format {p.suffix or 'with no extension'}; "
                   "convert to .txt, .csv, .docx or .xlsx first. This is NOT a clean result.)")
+            unscanned += 1
+        elif p.suffix.lower() in TEXT_EXTS and looks_binary(p):
+            print(f"\nNOT SCANNED: {p.name} (contains NUL bytes: binary, or UTF-16 without a byte-order mark; "
+                  "re-save as UTF-8 text. This is NOT a clean result.)")
             unscanned += 1
         else:
             try:

@@ -1,0 +1,1 @@
+{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": "audit-core guard could not run (no working Python found). Confirm before proceeding."}}

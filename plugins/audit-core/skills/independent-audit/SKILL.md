@@ -1,6 +1,7 @@
 ---
 name: independent-audit
-description: Run an independent review of work before it is trusted or shared: code, scripts, documents, decks, spreadsheets, databases and schemas, research or factual claims, and AI generated outputs. Use this skill whenever the user asks to audit, QA, stress test, red team, fact check, or get a second opinion on work, asks for an "independent" or "separate team" review, or wants work checked before they share or trust it, even if they don't say "audit". Not for routine code review or a quick "does this run" check. Separates building from reviewing, requires evidence for every finding, and keeps the user as the decision maker between stages.
+description: >-
+  Run an independent review of work before it is trusted or shared: code, scripts, documents, decks, spreadsheets, databases and schemas, research or factual claims, and AI generated outputs. Use this skill whenever the user asks to audit, QA, stress test, red team, fact check, or get a second opinion on work, asks for an "independent" or "separate team" review, or wants work checked before they share or trust it, even if they don't say "audit". Not for routine code review or a quick "does this run" check. Separates building from reviewing, requires evidence for every finding, and keeps the user as the decision maker between stages.
 ---
 
 # Independent Audit
@@ -28,7 +29,7 @@ Confirm in one round:
 
 ### 2. Prepare the source
 
-Reviewer agents are read-only and can't open `.xlsx`, `.docx`, or `.pptx`. For those files, export a plain-text copy into a temporary folder first (one CSV per sheet, or the document text) and give reviewers both the folder and the original path. Say in the report which files were reviewed as text copies, since charts, formatting, comments, and speaker notes are lost unless exported too. The copy holds the same personal data as the original, so run `pii-scrub` before copying when the material has any, and delete the copy after the audit. Skip this step when the material is already plain text or code.
+Reviewer agents are read-only and can't open `.xlsx`, `.docx`, or `.pptx`. For those files, export a plain-text copy into a temporary folder first (one CSV per sheet, or the document text) and give reviewers both the folder and the original path. Say in the report which files were reviewed as text copies, since charts, formatting, comments, and speaker notes are lost unless exported too. The copy holds the same personal data as the original, so run `pii-scrub` before copying when the material has any, and delete the copy after the audit. This temporary copy is the one permitted exception to pii-scrub's rule against writing personal data to other files. If the audit's purpose is to find personal information, the privacy lens cannot run on a scrubbed copy: review the original in place with `privacy-auditor` (read-only), and say in the report which version each lens saw. Skip this step when the material is already plain text or code.
 
 ### 3. Review
 

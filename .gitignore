@@ -21,4 +21,10 @@ data/
 synthetic_data/
 findings/
 .env
+.env.*
+*.pem
+*.key
+*.jsonl
+__pycache__/
+*.pyc
 .DS_Store
