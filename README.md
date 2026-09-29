@@ -23,6 +23,8 @@ Private Claude plugin marketplace. Contains rules and agent definitions only. Ne
 
 Edit, bump the version in plugins/audit-core/.claude-plugin/plugin.json, push, then click Update on the marketplace in Customize > Plugins. Claude.ai does not pull changes on its own.
 
+Agent descriptions that contain examples must use `description: >` (a folded block). A plain multi-line description with `Context:` lines is invalid YAML, and the `tools:` limit is then silently ignored, leaving the agent with every tool.
+
 ## Testing auditors
 
 Keep seeded-error test sets and their answer keys outside this repo. Score findings with a script the reviewers cannot read.

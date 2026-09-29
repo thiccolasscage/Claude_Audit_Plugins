@@ -4,7 +4,16 @@
 *.xlsx
 *.xls
 *.docx
+*.doc
+*.pptx
+*.ppt
+*.xlsm
+*.xlsb
 *.pdf
+*.db
+*.sqlite
+*.parquet
+*.zip
 *.json.key
 answer_key*
 answer-key*
