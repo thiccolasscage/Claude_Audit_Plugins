@@ -1,6 +1,6 @@
 ---
 name: independent-audit
-description: Run an independent review of work before it is trusted or shared: code, scripts, documents, decks, spreadsheets, databases and schemas, research or factual claims, and AI generated outputs. Use this skill whenever the user asks to audit, review, QA, check, verify, stress test, red team, fact check, or get a second opinion on work, or asks for an "independent" or "separate team" review, even if they don't say "audit". Separates building from reviewing, requires evidence for every finding, and keeps the user as the decision maker between stages.
+description: Run an independent review of work before it is trusted or shared: code, scripts, documents, decks, spreadsheets, databases and schemas, research or factual claims, and AI generated outputs. Use this skill whenever the user asks to audit, QA, stress test, red team, fact check, or get a second opinion on work, asks for an "independent" or "separate team" review, or wants work checked before they share or trust it, even if they don't say "audit". Not for routine code review or a quick "does this run" check. Separates building from reviewing, requires evidence for every finding, and keeps the user as the decision maker between stages.
 ---
 
 # Independent Audit
@@ -26,15 +26,19 @@ Confirm in one round:
 - Which review lenses apply: correctness, consistency, privacy, claims beyond evidence, and anything domain specific.
 - Whether the material contains personal information. If yes, use the `pii-scrub` skill first, or confirm the user wants to proceed with it as is.
 
-### 2. Review
+### 2. Prepare the source
+
+Reviewer agents are read-only and can't open `.xlsx`, `.docx`, or `.pptx`. For those files, export a plain-text copy into a temporary folder first (one CSV per sheet, or the document text) and give reviewers both the folder and the original path. Say in the report which files were reviewed as text copies, since charts, formatting, comments, and speaker notes are lost unless exported too. The copy holds the same personal data as the original, so run `pii-scrub` before copying when the material has any, and delete the copy after the audit. Skip this step when the material is already plain text or code.
+
+### 3. Review
 
 Run the relevant lenses. Where agents are available, run reviewers in parallel with separate context, then send their findings to the `skeptic` agent, which tries to refute each one. Only findings that survive go forward.
 
-### 3. Report
+### 4. Report
 
 Use the findings format in `references/findings-schema.md`. Lead with a one or two sentence verdict, then a table sorted by severity. Separate confirmed findings from anything unverifiable. State what was not checked.
 
-### 4. Hand back
+### 5. Hand back
 
 Stop. Ask which findings to act on. Fixes are a new build stage, followed by a new audit if the user wants one.
 

@@ -23,10 +23,10 @@ Do not modify anything yet.
 For files, run the scanner, which reports masked findings only:
 
 ```bash
-python scripts/pii_scan.py <file> [<file> ...]
+python "<this skill's folder>/scripts/pii_scan.py" <file> [<file> ...]
 ```
 
-It handles .txt, .md, .csv, .xlsx, and .docx, flags identifier-like column headers, and never prints full values. Then read the content yourself for what regex misses: personal names in free text, nicknames, job titles plus employer combinations, unusual details, and small groups where a combination of fields points to one person.
+It handles .txt, .md, .csv, .xlsx, and .docx, flags identifier-like column headers and author properties, and never prints full values. A file it can't read prints `NOT SCANNED`, which is not a clean result: convert it to a supported format or review it by hand. Then read the content yourself for what regex misses: personal names in free text, nicknames, job titles plus employer combinations, unusual details, and small groups where a combination of fields points to one person.
 
 For text pasted into chat, do the same inventory by reading, and apply the same rule: never echo found values in full.
 
@@ -55,7 +55,7 @@ Apply exactly the confirmed plan. Write to the new output file. Use code for str
 
 ### 4. Verify
 
-Run `scripts/pii_scan.py` on the output. Also re-read free-text fields for names. Anything still found is either fixed (if covered by the plan) or reported.
+Run the same scanner on the output. Also re-read free-text fields for names. Anything still found is either fixed (if covered by the plan) or reported.
 
 ### 5. Final report
 

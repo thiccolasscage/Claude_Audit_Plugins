@@ -9,14 +9,27 @@ import json
 import re
 import sys
 
-WRITE_WORDS = re.compile(
-    r"create|update|delete|remove|write|send|insert|upsert|share|upload|apply|execute|"
-    r"deploy|trash|move|publish|submit|post|edit|merge|rename|label|respond|run|"
-    r"set|add|pause|restore|reset|import|export|copy|spawn|stop|enable|disable|invoke",
-    re.I,
-)
+# Matched against whole words of the tool name, so "get_assets" is not "set" and
+# "list_task_runs" is not "run".
+WRITE_VERBS = {
+    "create", "update", "delete", "remove", "write", "send", "insert", "upsert", "share",
+    "upload", "apply", "execute", "deploy", "trash", "untrash", "move", "publish", "submit",
+    "post", "edit", "merge", "rename", "label", "unlabel", "respond", "run", "set", "add",
+    "pause", "restore", "reset", "import", "export", "copy", "spawn", "stop", "enable",
+    "disable", "invoke", "reply", "comment", "mark", "unmark", "save", "start", "kill",
+    "terminate", "use", "duplicate", "generate", "connect", "bind", "revert", "confirm",
+    "interact", "unshare",
+}
+WORD_SPLIT = re.compile(r"[_\-]+|(?<=[a-z])(?=[A-Z])")
+
+
+def is_write_action(action):
+    return any(w.lower() in WRITE_VERBS for w in WORD_SPLIT.split(action))
+
+
 EMAIL = re.compile(r"\b[\w.+-]+@([\w-]+(?:\.[\w-]+)+)\b")
-PHONE = re.compile(r"(?<!\d)(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?(\d{3})[\s.-]?(\d{4})(?!\d)")
+# Area code and exchange must start 2-9 (US numbering plan): skips epoch timestamps and IDs.
+PHONE = re.compile(r"(?<!\d)(?:\+?1[\s.-]?)?\(?[2-9]\d{2}\)?[\s.-]?([2-9]\d{2})[\s.-]?(\d{4})(?!\d)")
 SSN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 FAKE_DOMAINS = {"example.com", "example.org", "example.net"}
 
@@ -53,7 +66,7 @@ def main():
 
     if tool.startswith("mcp__"):
         action = tool.split("__")[-1]
-        if WRITE_WORDS.search(action):
+        if is_write_action(action):
             service = tool.split("__")[1] if tool.count("__") >= 2 else "a connected service"
             reasons.append(f"This would change something in {service} ({action}).")
 
