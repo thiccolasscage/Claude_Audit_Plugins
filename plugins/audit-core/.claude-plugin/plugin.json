@@ -1,6 +1,6 @@
 {
   "name": "audit-core",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "description": "Account wide independent review: staged audits with evidence rules, skeptic and privacy auditor agents, PII scrubbing, and a guardrail that asks before writing to connected services or sending personal identifiers.",
   "author": { "name": "Kyle" }
 }
