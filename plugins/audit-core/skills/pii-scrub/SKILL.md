@@ -26,7 +26,7 @@ For files, run the scanner, which reports masked findings only:
 python "<this skill's folder>/scripts/pii_scan.py" <file> [<file> ...]
 ```
 
-It handles .txt, .md, .csv, .xlsx, and .docx, flags identifier-like column headers and author properties, and never prints full values. A file it can't read prints `NOT SCANNED`, which is not a clean result: convert it to a supported format or review it by hand. Then read the content yourself for what regex misses: personal names in free text, nicknames, job titles plus employer combinations, unusual details, and small groups where a combination of fields points to one person.
+It handles .txt, .md, .csv, .xlsx, .docx, and .pptx (slide text, tables, alt text, speaker notes), flags identifier-like column headers and author properties, and never prints full values. A file it can't read prints `NOT SCANNED`, which is not a clean result: convert it to a supported format or review it by hand. Then read the content yourself for what regex misses: personal names in free text, nicknames, job titles plus employer combinations, unusual details, and small groups where a combination of fields points to one person.
 
 For text pasted into chat, do the same inventory by reading, and apply the same rule: never echo found values in full.
 

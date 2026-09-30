@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """PreToolUse guard. Asks the user before:
-  1. any connected-service (MCP) tool that looks like it writes, sends, or deletes
-  2. any outbound tool call whose input contains email, phone, or SSN patterns
+  1. any connected-service (MCP) tool that is not clearly read-only, and any
+     query tool whose input contains SQL that changes data
+  2. any covered tool call whose input contains email, phone, SSN, or labeled
+     ID / birth-date patterns (MRN, DOB, student ID and similar)
   3. any call it cannot read or understand (fails safe, never silently allows)
-Never prints the identifier itself. Stays silent (allows) otherwise.
+Covers connected-service (mcp__) tools, WebFetch, WebSearch, Artifact and
+ArtifactData. It does not see shell commands or local file writes, and regexes
+miss names and free text.
+Never prints the identifier itself. Asks (never blocks); stays silent otherwise.
 Reserved fictional values (example.com emails, 555-0100 to 555-0199 phones) are ignored.
 Phone checks cover US-format numbers only.
 """
@@ -20,6 +25,8 @@ from urllib.parse import unquote
 READ_VERBS = {
     "get", "list", "search", "read", "query", "fetch", "find", "describe", "check", "lookup",
     "analyze", "download", "whoami", "ping", "show", "view", "count", "validate", "resolve", "inspect",
+    "status", "overview", "metadata", "schema", "help", "guide", "context", "screenshot", "explain",
+    "recommend", "suggest", "info", "diff", "logs", "advisors", "preview",
 }
 SAFE_ACTIONS = {"get_create_automation_instructions", "get_file_upload_url"}
 WRITE_VERBS = {
@@ -32,8 +39,10 @@ WRITE_VERBS = {
     "interact", "unshare", "call", "trigger", "click", "archive", "clear", "cancel", "rebase",
     "initiate", "remix", "navigate", "detach", "close", "press", "drag", "select",
     "purge", "wipe", "drop", "restart", "shutdown", "replace", "install", "uninstall",
+    "append", "push", "invite", "overwrite", "fire", "batch",
 }
-WORD_SPLIT = re.compile(r"[_\-]+|(?<=[a-z])(?=[A-Z])")
+WORD_SPLIT = re.compile(r"[_\-.]+|(?<=[a-z])(?=[A-Z])")
+SQL_WRITE = re.compile(r"\b(?:insert|update|delete|drop|alter|truncate|create|grant|revoke|merge|replace)\b", re.I)
 
 
 def is_write_action(action):
@@ -50,7 +59,14 @@ EMAIL = re.compile(r"\b[\w.+-]+@([\w-]+(?:\.[\w-]+)+)\b")
 # Area code and exchange must start 2-9 (US numbering plan): skips epoch timestamps and IDs.
 PHONE = re.compile(r"(?<!\d)(?:\+?1[\s.-]?)?\(?[2-9]\d{2}\)?[\s.-]?([2-9]\d{2})[\s.-]?(\d{4})(?!\d)")
 # Lookarounds instead of \b so an SSN at the start of a line or after a tab is still seen.
-SSN = re.compile(r"(?<![\d-])\d{3}-\d{2}-\d{4}(?![\d-])")
+# Separators may be a hyphen, dot or space.
+SSN = re.compile(r"(?<![\d-])\d{3}[-. ]\d{2}[-. ]\d{4}(?![\d-])")
+MONTH = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
+# Labeled identifiers: a record-type or birth-date label followed by a value with a digit.
+LABELED = re.compile(
+    r"(?:\bMRN|\bmedical record(?: number| no\.?)?|\bDOB|\bdate of birth|\bbirth ?date|"
+    r"\b(?:student|patient|employee|member|intern|participant)\s*(?:ID\b|#|number\b|no\.?))"
+    r"\W{0,6}(?:[A-Z]{0,3}-?\d|" + MONTH + r"\s*\d)", re.I)
 FAKE_DOMAINS = {"example.com", "example.org", "example.net"}
 
 
@@ -62,6 +78,8 @@ def flatten(value, out):
         for k, v in value.items():
             flatten(k, out)
             flatten(v, out)
+            if isinstance(k, str) and isinstance(v, (str, int, float)):
+                out.append(f"{k}: {v}")  # keeps a label stored as a field name next to its value
     elif isinstance(value, (list, tuple)):
         for v in value:
             flatten(v, out)
@@ -79,9 +97,11 @@ def pii_counts(text):
     phones = [m for m in PHONE.finditer(text)
               if not (m.group(1) == "555" and 100 <= int(m.group(2)) <= 199)]
     ssns = list(SSN.finditer(text))
+    labeled = list(LABELED.finditer(text))
     if emails: counts["email"] = len(emails)
     if phones: counts["phone"] = len(phones)
     if ssns: counts["SSN pattern"] = len(ssns)
+    if labeled: counts["labeled ID or birth date"] = len(labeled)
     return counts
 
 
@@ -112,6 +132,8 @@ def main():
         if is_write_action(action):
             service = tool.split("__")[1] if tool.count("__") >= 2 else "a connected service"
             reasons.append(f"{service} tool \"{action}\" is not a recognised read-only action, so it may change something.")
+        elif SQL_WRITE.search(payload) and {w.lower() for w in WORD_SPLIT.split(action)} & {"query", "execute"}:
+            reasons.append(f"The {service if tool.count('__') >= 2 else 'connected service'} query looks like it changes data.")
 
     found = pii_counts(payload)
     if found:

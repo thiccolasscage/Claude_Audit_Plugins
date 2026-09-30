@@ -1,9 +1,9 @@
 {
-  "description": "Ask before writing to connected services or sending personal identifiers out of the session.",
+  "description": "Ask before connected-service (MCP) tools that aren't clearly read-only, and before connected-service, web, or artifact calls that contain contact numbers, SSNs, or labeled IDs. Does not cover shell or local file writes.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__.*|WebFetch|WebSearch",
+        "matcher": "mcp__.*|WebFetch|WebSearch|Artifact|ArtifactData",
         "hooks": [
           {
             "type": "command",
