@@ -1,7 +1,6 @@
 ---
 name: independent-audit
-description: >-
-  Run an independent review of work before it is trusted or shared: code, scripts, documents, decks, spreadsheets, databases and schemas, research or factual claims, and AI generated outputs. Use this skill whenever the user asks to audit, QA, stress test, red team, fact check, or get a second opinion on work, asks for an "independent" or "separate team" review, or wants work checked before they share or trust it, even if they don't say "audit". Not for routine code review or a quick "does this run" check. Separates building from reviewing, requires evidence for every finding, and keeps the user as the decision maker between stages.
+description: "Run an independent review of work before it is trusted or shared: code, scripts, documents, decks, spreadsheets, databases and schemas, research or factual claims, and AI generated outputs. Use this skill whenever the user asks to audit, QA, stress test, red team, fact check, or get a second opinion on work, asks for an \"independent\" or \"separate team\" review, or wants work checked before they share or trust it, even if they don't say \"audit\". Not for routine code review or a quick \"does this run\" check. Separates building from reviewing, requires evidence for every finding, and keeps the user as the decision maker between stages."
 ---
 
 # Independent Audit

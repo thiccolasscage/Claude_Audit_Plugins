@@ -3,6 +3,7 @@
   "owner": {
     "name": "Kyle"
   },
+  "description": "Personal plugins by Kyle: independent audit and PII scrubbing.",
   "plugins": [
     {
       "name": "audit-core",
