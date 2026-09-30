@@ -1,6 +1,6 @@
 # personal-plugins
 
-Private Claude plugin marketplace. Contains rules and agent definitions only. Never commit data, answer keys, or anything with real names or contact details; .gitignore blocks common data files as a backstop.
+Claude plugin marketplace. This repo is public, so it contains rules and agent definitions only. Never commit data, answer keys, or anything with real names or contact details; .gitignore blocks common data files as a backstop.
 
 ## audit-core
 
@@ -16,7 +16,7 @@ The guard is strict: it allows a connected-service tool without asking only when
 
 ## Install
 
-1. Push this folder to a private GitHub repo.
+1. Push this folder to a GitHub repo. This one is public; keep every data file out of it.
 2. claude.ai: Customize > Plugins > Add > Add marketplace > Add from a repository > enter owner/repo.
 3. Install audit-core from that marketplace.
 4. Claude Code picks it up at next session start when signed in with the same account (v2.1.273 or later).
@@ -25,7 +25,8 @@ The guard is strict: it allows a connected-service tool without asking only when
 
 Edit, bump the version in plugins/audit-core/.claude-plugin/plugin.json, push, then click Update on the marketplace in Customize > Plugins. Claude.ai does not pull changes on its own.
 
-Agent descriptions that contain examples must use `description: >` (a folded block). A plain multi-line description with `Context:` lines is invalid YAML, and the `tools:` limit is then silently ignored, leaving the agent with every tool.
+Agent descriptions that contain examples must be valid YAML. Use either a folded block (`description: >`) or a single quoted line with `
+` for line breaks (the current style, which the desktop app accepts). A plain multi-line description with `Context:` lines is invalid YAML, and the `tools:` limit is then silently ignored, leaving the agent with every tool. After any edit, parse the header and check that `tools` reads as a list.
 
 ## Testing auditors
 
