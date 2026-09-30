@@ -7,8 +7,7 @@
     {
       "name": "audit-core",
       "source": "./plugins/audit-core",
-      "description": "Account wide independent review: staged audits with evidence rules, skeptic and privacy auditor agents, PII scanning and scrubbing, and a guardrail that asks before connected-service tools that aren't clearly read-only, or before sending common identifier patterns to connected services, the web, or artifacts.",
-      "version": "0.1.9"
+      "description": "Account wide independent review: staged audits with evidence rules, skeptic and privacy auditor agents, PII scanning and scrubbing, and a guardrail that asks before connected-service tools that aren't clearly read-only, or before sending common identifier patterns to connected services, the web, or artifacts."
     }
   ]
 }
