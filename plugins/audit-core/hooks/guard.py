@@ -16,7 +16,17 @@ import json
 import re
 import sys
 import unicodedata
+from pathlib import Path
 from urllib.parse import unquote
+
+# Email, phone and SSN patterns are shared with the pii-scrub scanner so the two cannot drift apart.
+# If the shared file can't be loaded, main() asks instead of letting the call through.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "pii-scrub" / "scripts"))
+try:
+    from pii_patterns import EMAIL, PHONE, SSN, FAKE_DOMAINS, is_fictional_phone
+    PATTERNS_LOADED = True
+except Exception:
+    PATTERNS_LOADED = False
 
 # Strict by default: an MCP tool is allowed without asking only when its name contains a READ verb
 # and NO write verb anywhere (so get_and_delete asks). Unknown tools ask. Whole words only, so
@@ -55,19 +65,12 @@ def is_write_action(action):
     return not any(w in READ_VERBS for w in words)
 
 
-EMAIL = re.compile(r"\b[\w.+-]+@([\w-]+(?:\.[\w-]+)+)\b")
-# Area code and exchange must start 2-9 (US numbering plan): skips epoch timestamps and IDs.
-PHONE = re.compile(r"(?<!\d)(?:\+?1[\s.-]?)?\(?[2-9]\d{2}\)?[\s.-]?([2-9]\d{2})[\s.-]?(\d{4})(?!\d)")
-# Lookarounds instead of \b so an SSN at the start of a line or after a tab is still seen.
-# Separators may be a hyphen, dot or space.
-SSN = re.compile(r"(?<![\d-])\d{3}[-. ]\d{2}[-. ]\d{4}(?![\d-])")
 MONTH = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
 # Labeled identifiers: a record-type or birth-date label followed by a value with a digit.
 LABELED = re.compile(
     r"(?:\bMRN|\bmedical record(?: number| no\.?)?|\bDOB|\bdate of birth|\bbirth ?date|"
     r"\b(?:student|patient|employee|member|intern|participant)\s*(?:ID\b|#|number\b|no\.?))"
     r"\W{0,6}(?:[A-Z]{0,3}-?\d|" + MONTH + r"\s*\d)", re.I)
-FAKE_DOMAINS = {"example.com", "example.org", "example.net"}
 
 
 def flatten(value, out):
@@ -76,10 +79,14 @@ def flatten(value, out):
         out.append(value)
     elif isinstance(value, dict):
         for k, v in value.items():
-            flatten(k, out)
-            flatten(v, out)
             if isinstance(k, str) and isinstance(v, (str, int, float)):
-                out.append(f"{k}: {v}")  # keeps a label stored as a field name next to its value
+                # One string holds both, and keeps a label stored as a field name next to its value.
+                # Adding k and v on their own as well would count every match twice. A newline, not ": ",
+                # so a number split across key and value ({"phone 614": "555-0247"}) still matches.
+                out.append(f"{k}\n{v}")
+            else:
+                flatten(k, out)
+                flatten(v, out)
     elif isinstance(value, (list, tuple)):
         for v in value:
             flatten(v, out)
@@ -94,8 +101,7 @@ def normalize(text):
 def pii_counts(text):
     counts = {}
     emails = [m for m in EMAIL.finditer(text) if m.group(1).lower() not in FAKE_DOMAINS]
-    phones = [m for m in PHONE.finditer(text)
-              if not (m.group(1) == "555" and 100 <= int(m.group(2)) <= 199)]
+    phones = [m for m in PHONE.finditer(text) if not is_fictional_phone(m)]
     ssns = list(SSN.finditer(text))
     labeled = list(LABELED.finditer(text))
     if emails: counts["email"] = len(emails)
@@ -115,8 +121,12 @@ def ask(reason):
 
 
 def main():
+    if not PATTERNS_LOADED:
+        ask("audit-core guard: could not load its shared patterns (skills/pii-scrub/scripts/pii_patterns.py), "
+            "so it cannot check this call. Confirm before proceeding.")
     try:
-        data = json.load(sys.stdin)
+        # Read bytes as UTF-8, not the system code page (cp1252 on Windows), or a Unicode dash turns to junk.
+        data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     except Exception:
         ask("audit-core guard: could not read the tool call, so it cannot be checked. Confirm before proceeding.")
     tool = data.get("tool_name") if isinstance(data, dict) else None
@@ -129,11 +139,12 @@ def main():
 
     if tool.startswith("mcp__"):
         action = tool.split("__")[-1]
+        # Set before both branches: the SQL branch below names the service too.
+        service = tool.split("__")[1] if tool.count("__") >= 2 else None
         if is_write_action(action):
-            service = tool.split("__")[1] if tool.count("__") >= 2 else "a connected service"
-            reasons.append(f"{service} tool \"{action}\" is not a recognised read-only action, so it may change something.")
+            reasons.append(f"{service or 'a connected service'} tool \"{action}\" is not a recognised read-only action, so it may change something.")
         elif SQL_WRITE.search(payload) and {w.lower() for w in WORD_SPLIT.split(action)} & {"query", "execute"}:
-            reasons.append(f"The {service if tool.count('__') >= 2 else 'connected service'} query looks like it changes data.")
+            reasons.append(f"The {service or 'connected service'} query looks like it changes data.")
 
     found = pii_counts(payload)
     if found:

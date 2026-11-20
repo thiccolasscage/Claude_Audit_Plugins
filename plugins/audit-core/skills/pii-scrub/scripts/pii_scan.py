@@ -15,13 +15,17 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+# Email, phone and SSN patterns are shared with the guard hook (hooks/guard.py) so the two cannot drift apart.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pii_patterns import EMAIL, PHONE, SSN  # noqa: E402
+
 TEXT_EXTS = {".txt", ".md", ".csv", ".tsv", ".json", ".log", ".html", ".htm", ".xml", ".yaml", ".yml", ".rtf"}
 SUPPORTED = TEXT_EXTS | {".xlsx", ".docx", ".pptx"}
 
 # Ordered by priority: earlier patterns win when matches overlap.
 PATTERNS = [
-    ("SSN", re.compile(r"\b\d{3}[-. ]\d{2}[-. ]\d{4}\b")),
-    ("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")),
+    ("SSN", SSN),
+    ("EMAIL", EMAIL),
     ("URL", re.compile(r"\bhttps?://\S+|\bwww\.\S+", re.I)),
     ("IP", re.compile(r"(?<!Section )(?<!section )(?<!version )(?<!Version )(?<![vV])\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b")),
     # A value after a record-type label, e.g. "MRN: A1234567", "Student ID 654321", "Record # 00123".
@@ -29,7 +33,7 @@ PATTERNS = [
         r"\b(?:MRN|medical record(?: number| no\.?)?|record (?:#|no\.?|number)|(?:student|employee|patient|"
         r"member|intern|participant|case|client|account|acct)\s*(?:ID|#|no\.?|number))\s*[:#]?\s*[A-Z]{0,4}-?\d[A-Z0-9-]{2,}",
         re.I)),
-    ("PHONE", re.compile(r"(?<!\d)(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}(?!\d)")),
+    ("PHONE", PHONE),
     ("INTL_PHONE", re.compile(r"(?<![\w+])\+[2-9]\d{0,2}(?=(?:[\s.-]?\d){7,})(?:[\s.-]?\d{2,4}){2,5}(?!\d)")),
     ("DATE", re.compile(
         r"\b\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\b|\b\d{1,2}[/.-]\d{1,2}[/.-](?:\d{4}|\d{2})\b|"
